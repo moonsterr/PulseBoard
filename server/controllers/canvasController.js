@@ -4,6 +4,7 @@ import {
   getCanvasService,
   getOwnerId,
   deleteCanvasService,
+  getElementsService,
 } from '../services/canvasService.js';
 
 export const createBoard = async (req, res) => {
@@ -89,3 +90,14 @@ export const deleteCanvas = async (req, res) => {
     return res.status(500).send({ success: false, data: error });
   }
 };
+export async function getElements(req, res) {
+  const canvasId = req.params.canvasId;
+  try {
+    const elements = await getElementsService(canvasId);
+    res.send({ success: true, data: elements });
+  } catch (err) {
+    res
+      .status(500)
+      .send({ success: false, message: 'Failed to fetch elements' });
+  }
+}

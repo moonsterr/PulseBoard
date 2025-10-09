@@ -5,6 +5,7 @@ import {
   getCanvases,
   authorizeUser,
   deleteCanvas,
+  getElements,
 } from '../controllers/canvasController.js';
 
 const router = express.Router();
@@ -13,5 +14,5 @@ router.post('/createboard', authMiddleware, createBoard);
 router.get('/canvases', authMiddleware, getCanvases);
 router.post('/canvas/verify', authMiddleware, authorizeUser);
 router.delete('/canvas/:id', authMiddleware, deleteCanvas);
-
+router.get('/:canvasId', getElements);
 export default router;

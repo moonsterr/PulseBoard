@@ -159,3 +159,34 @@ export const updateElement = async (element, canvasId) => {
     return null;
   }
 };
+export async function getElementsService(canvasId) {
+  try {
+    const res = await query(
+      'SELECT * FROM elements WHERE canvas_id = $1 ORDER BY id ASC',
+      [canvasId]
+    );
+
+    const formatted = res.rows.map((el) => {
+      const base = {
+        _id: el.special_id || el.id.toString(), // frontend uses _id
+        type: el.type,
+        style: el.style,
+      };
+
+      if (['draw', 'eraser'].includes(el.type)) {
+        base.points = el.points || [];
+      } else {
+        base.startingPosition = el.starting_position;
+        base.endingPosition = el.ending_position;
+        base.text_content = el.text_content;
+      }
+
+      return base;
+    });
+
+    return formatted;
+  } catch (err) {
+    console.error('Error fetching elements:', err);
+    throw err;
+  }
+}
