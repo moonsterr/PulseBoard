@@ -274,7 +274,6 @@ export const renameCollectionService = async (
   newName
 ) => {
   try {
-    // Check ownership
     const res = await query(`SELECT owner_id FROM collections WHERE id = $1`, [
       collectionId,
     ]);
@@ -284,7 +283,6 @@ export const renameCollectionService = async (
     if (res.rows[0].owner_id !== ownerId)
       return { success: false, message: 'Not authorized' };
 
-    // Update
     const updateRes = await query(
       `UPDATE collections SET name = $1 WHERE id = $2 RETURNING *`,
       [newName, collectionId]
@@ -298,7 +296,6 @@ export const renameCollectionService = async (
 };
 export const deleteCollectionService = async (ownerId, collectionId) => {
   try {
-    // Step 1: Check ownership
     const res = await query(`SELECT owner_id FROM collections WHERE id = $1`, [
       collectionId,
     ]);
@@ -314,7 +311,6 @@ export const deleteCollectionService = async (ownerId, collectionId) => {
       };
     }
 
-    // Step 2: Get all canvases in this collection
     const canvasesRes = await query(
       `SELECT id FROM canvases WHERE belongs_to_collection = $1`,
       [collectionId]
@@ -322,19 +318,16 @@ export const deleteCollectionService = async (ownerId, collectionId) => {
 
     const canvasIds = canvasesRes.rows.map((row) => row.id);
 
-    // Step 3: Delete elements in those canvases
     if (canvasIds.length > 0) {
       await query(`DELETE FROM elements WHERE canvas_id = ANY($1::int[])`, [
         canvasIds,
       ]);
 
-      // Delete the canvases
       await query(`DELETE FROM canvases WHERE id = ANY($1::int[])`, [
         canvasIds,
       ]);
     }
 
-    // Step 4: Delete the collection itself
     await query(`DELETE FROM collections WHERE id = $1`, [collectionId]);
 
     return { success: true, message: 'Collection and its canvases deleted' };

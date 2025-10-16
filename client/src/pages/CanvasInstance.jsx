@@ -40,7 +40,6 @@ export default function CanvasInstance() {
 
   const [elements, setElements] = useState({});
   const [order, setOrder] = useState([]);
-  console.log(elements);
 
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
@@ -73,10 +72,8 @@ export default function CanvasInstance() {
         if (!res.ok) throw new Error('Verification failed');
         setLoading({ loading: true, status: 'fetching' });
         // Fetch initial canvas data here if needed
-        console.log('hello');
         const res2 = await fetch(`${import.meta.env.VITE_API_URL}/${canvasId}`);
         const data = await res2.json();
-        console.log(data);
 
         setLoading({ loading: false, status: 'done' });
         if (data.success) {

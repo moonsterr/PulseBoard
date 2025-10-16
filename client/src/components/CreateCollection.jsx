@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Spinner from './Spinner';
 
-export default function CreateCollection({ setToggle }) {
+export default function CreateCollection({ setToggle, setCollectionData }) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -29,6 +29,9 @@ export default function CreateCollection({ setToggle }) {
         alert('Something went wrong');
         return;
       }
+      setCollectionData((prev) => [...prev, data.data]);
+      setToggle(false);
+      setName('');
     } catch (error) {
       alert(`Something went wrong: ${error.message}`);
     } finally {

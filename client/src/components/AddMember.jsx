@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import TeamMemberCard from './TeamMemberCard';
 import Spinner from './Spinner';
+import TeamMemberCard from './TeamMemberCard';
 
-export default function AddMember({ setToggle }) {
+export default function AddMember({ setToggle, setAuthorizedUsers }) {
   const [name, setName] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // stop page reload
-    if (!name.trim()) return; // no empty searches
+    e.preventDefault();
+    if (!name.trim()) return;
 
     try {
       setLoading(true);
@@ -18,13 +18,10 @@ export default function AddMember({ setToggle }) {
         `${import.meta.env.VITE_API_URL}/queryusers?name=${encodeURIComponent(
           name
         )}`,
-        {
-          credentials: 'include',
-        }
+        { credentials: 'include' }
       );
 
       const data = await res.json();
-
       if (!data.success) {
         alert('Something went wrong');
         return;
@@ -38,12 +35,38 @@ export default function AddMember({ setToggle }) {
     }
   };
 
+  const handleAuthorize = async (userId, username) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/addAuthorized`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // so authMiddleware can read cookies/session
+        body: JSON.stringify({ id: userId }), // backend expects req.body.id
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.message || 'Could not authorize user');
+        return;
+      }
+
+      // Update locally without reload
+      setAuthorizedUsers((prev) => [...prev, { id: userId, username }]);
+
+      setTimeout(() => setToggle(false), 50);
+    } catch (error) {
+      console.error('Authorize error:', error);
+      alert('Something went wrong while authorizing');
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={() => setToggle(false)}>
       <form
         className="modal-form"
         onClick={(e) => e.stopPropagation()}
-        onSubmit={handleSubmit} // ✅ use onSubmit, not action
+        onSubmit={handleSubmit}
       >
         <h2>Add Member</h2>
         <div className="form-inputs">
@@ -64,7 +87,12 @@ export default function AddMember({ setToggle }) {
           {loading && <Spinner size={50} />}
           {!loading &&
             users.map((user) => (
-              <TeamMemberCard key={user.id} name={user.username} id={user.id} />
+              <TeamMemberCard
+                key={user.id}
+                name={user.username}
+                id={user.id}
+                onAuthorize={() => handleAuthorize(user.id, user.username)}
+              />
             ))}
         </div>
 

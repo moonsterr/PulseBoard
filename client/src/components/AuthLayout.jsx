@@ -23,7 +23,7 @@ export default function AuthLayout() {
       });
   }, []);
 
-  // if (isAuth === null) return <div>Loading...</div>;
+  if (isAuth === null) return <div>Loading...</div>;
   if (isAuth === false) {
     navigate('/signin');
     return;

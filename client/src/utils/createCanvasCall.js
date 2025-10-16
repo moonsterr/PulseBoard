@@ -1,4 +1,4 @@
-export default async function createBoardCall(name) {
+export default async function createBoardCall(name, id = 'dashboard') {
   console.log('this is the name from board', name);
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/createboard`, {
@@ -9,7 +9,7 @@ export default async function createBoardCall(name) {
       },
       body: JSON.stringify({
         name,
-        collection: 1,
+        collection: id === 'dashboard' ? null : +id,
       }),
     });
     const data = await res.json();

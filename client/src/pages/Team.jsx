@@ -9,48 +9,43 @@ function Team() {
   const [toggle, setToggle] = useState(false);
   const [authorizedUsers, setAuthorizedUsers] = useState([]);
   const [authorizedBy, setAuthorizedBy] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingBy, setLoadingBy] = useState(false);
+  console.log(authorizedUsers);
 
   useEffect(() => {
     const fetchAuthorizedBy = async () => {
       try {
-        setLoading(true);
+        setLoadingBy(true);
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/checkAuthorized`,
-          { credentials: 'include' }
+          {
+            credentials: 'include',
+          }
         );
         const data = await res.json();
-        if (data.success) {
-          setAuthorizedBy(data.data);
-        } else {
-          setAuthorizedBy([]);
-          console.log(data);
-        }
+        setAuthorizedBy(data.success ? data.data : []);
       } catch (err) {
         console.error('Error fetching authorized by:', err);
         setAuthorizedBy([]);
       } finally {
-        setLoading(false);
+        setLoadingBy(false);
       }
     };
 
     const fetchAuthorizedUsers = async () => {
       try {
-        setLoading(true);
+        setLoadingUsers(true);
         const res = await fetch(`${import.meta.env.VITE_API_URL}/authorized`, {
           credentials: 'include',
         });
         const data = await res.json();
-        if (data.success) {
-          setAuthorizedUsers(data.data);
-        } else {
-          setAuthorizedUsers([]);
-        }
+        setAuthorizedUsers(data.success ? data.data : []);
       } catch (err) {
         console.error('Error fetching authorized users:', err);
         setAuthorizedUsers([]);
       } finally {
-        setLoading(false);
+        setLoadingUsers(false);
       }
     };
 
@@ -78,8 +73,8 @@ function Team() {
         <div className="dashboard-scenes-header">
           <h2>People you have authorized</h2>
         </div>
-        {loading && <Spinner />}
-        {!loading && (
+        {loadingUsers && <Spinner />}
+        {!loadingUsers && (
           <div className="team-grid">
             {authorizedUsers.map((user) => (
               <div key={user.id} className="team-card">
@@ -96,8 +91,8 @@ function Team() {
         <div className="dashboard-scenes-header">
           <h2>People who have authorized you</h2>
         </div>
-        {loading && <Spinner />}
-        {!loading && (
+        {loadingBy && <Spinner />}
+        {!loadingBy && (
           <div className="team-grid">
             {authorizedBy.map((user) => (
               <div key={user.id} className="team-card">
@@ -109,7 +104,12 @@ function Team() {
         )}
       </div>
 
-      {toggle && <AddMember setToggle={setToggle} />}
+      {toggle && (
+        <AddMember
+          setAuthorizedUsers={setAuthorizedUsers}
+          setToggle={setToggle}
+        />
+      )}
     </div>
   );
 }

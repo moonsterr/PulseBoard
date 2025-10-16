@@ -27,7 +27,6 @@ export default function DashboardLayout() {
   const [error, setError] = useState({ error: false, data: null });
   const [collectionData, setCollectionData] = useState([]);
   const [collectionLoading, setCollectionLoading] = useState(true);
-  console.log('this is the collection Data,', collectionData);
 
   async function handleSubmit(formdata) {
     const username = formdata.get('username');
@@ -196,7 +195,10 @@ export default function DashboardLayout() {
             >
               <FaPlus className="sidebar-icon" />
               {toggleCollection && (
-                <CreateCollection setToggle={setCollectionToggle} />
+                <CreateCollection
+                  setCollectionData={setCollectionData}
+                  setToggle={setCollectionToggle}
+                />
               )}
             </div>
           </div>
@@ -234,7 +236,9 @@ export default function DashboardLayout() {
         </div>
       </div>
 
-      <Outlet context={{ data, loading, collectionData }} />
+      <Outlet
+        context={{ data, loading, collectionData, setData, setCollectionData }}
+      />
     </div>
   );
 }

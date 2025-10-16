@@ -47,7 +47,11 @@ export const queryUsersService = async (name, currentUserId) => {
   }
 };
 export const addAuthorizedUserService = async (userId, addUserId) => {
-  const sql = `
+  const checkSql = `
+    SELECT * FROM authorized
+    WHERE user_id = $1 AND authorized_by = $2
+  `;
+  const insertSql = `
     INSERT INTO authorized (user_id, authorized_by)
     VALUES ($1, $2)
     RETURNING user_id, authorized_by
@@ -55,13 +59,19 @@ export const addAuthorizedUserService = async (userId, addUserId) => {
   const values = [addUserId, userId];
 
   try {
-    const result = await query(sql, values);
+    const existing = await query(checkSql, values);
+    if (existing.rows.length > 0) {
+      return { message: 'User already authorized', already: true };
+    }
+
+    const result = await query(insertSql, values);
     return result.rows[0];
   } catch (err) {
     console.error('addAuthorizedUserService error:', err);
     return false;
   }
 };
+
 export const getAuthorizedByService = async (userId) => {
   const sql = `
     SELECT u.id, u.username, u.photo

@@ -1,17 +1,23 @@
 // SceneForm.jsx
 import { useState } from 'react';
 import createBoardCall from '../utils/createCanvasCall.js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 export default function CreateScene({ setToggle }) {
   const [name, setName] = useState('');
   const navigate = useNavigate();
+  const { setData } = useOutletContext();
+  const location = useLocation();
+  const lastSegment = location.pathname.split('/').filter(Boolean).pop();
 
   const handleSubmit = async () => {
     try {
-      const res = await createBoardCall(name);
+      console.log(lastSegment);
+      const res = await createBoardCall(name, lastSegment);
+
       if (res.success) {
-        console.log(200);
+        setData((prev) => [...prev, res.data]);
         navigate(`/canvas?id=${res.data.id}`);
       }
       setToggle(false);
