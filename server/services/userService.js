@@ -94,3 +94,25 @@ export const getAuthorizedUsersService = async (userId) => {
     throw error;
   }
 };
+export const updateUsernameService = async (userId, username) => {
+  const check = await query(`SELECT 1 FROM users WHERE username = $1`, [
+    username,
+  ]);
+  if (check.rows.length > 0) return 'username';
+  const sql = `
+    UPDATE users
+    SET username = $1
+    WHERE id = $2
+    RETURNING id, username, email, photo
+  `;
+  const values = [username, userId];
+
+  try {
+    const result = await query(sql, values);
+    console.log('hello something going on sir?');
+    return result.rows[0]?.username || null;
+  } catch (err) {
+    console.error('updateUsernameService error:', err);
+    throw err;
+  }
+};

@@ -9,6 +9,7 @@ export default async function createBoardCall(name) {
       },
       body: JSON.stringify({
         name,
+        collection: 1,
       }),
     });
     const data = await res.json();

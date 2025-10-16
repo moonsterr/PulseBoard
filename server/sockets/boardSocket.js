@@ -1,6 +1,3 @@
-import pool from '../config/db.js'; // adjust the path to your Postgres pool
-import { producer } from '../producer/kafka.js';
-import { saveElement, updateElement } from '../services/canvasService.js';
 import { sendToKafka } from '../services/kafkaService.js';
 export default (io, socket) => {
   console.log('Board socket connected:', socket.id);

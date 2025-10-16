@@ -4,7 +4,7 @@ import {
   FaCheckCircle,
   FaTimesCircle,
 } from 'react-icons/fa';
-// import './Banner.css';
+import './Banner.css';
 const iconMap = {
   success: FaCheckCircle,
   neutral: FaInfoCircle,

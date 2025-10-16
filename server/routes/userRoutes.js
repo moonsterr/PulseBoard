@@ -8,6 +8,7 @@ import {
   addAuthorizedUser,
   getAuthorizedBy,
   getAuthorizedUsers,
+  updateUsername,
 } from '../controllers/userController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import passport from 'passport';
@@ -40,5 +41,6 @@ router.get('/queryusers', authMiddleware, queryUsers);
 router.post('/addAuthorized', authMiddleware, addAuthorizedUser);
 router.get('/checkAuthorized', authMiddleware, getAuthorizedBy);
 router.get('/authorized', authMiddleware, getAuthorizedUsers);
+router.put('/update', authMiddleware, updateUsername);
 
 export default router;

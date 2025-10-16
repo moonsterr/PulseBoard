@@ -1,0 +1,246 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+#root {
+  font-family: Arial, Helvetica, sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  gap: 20px;
+  background-color: #ccc;
+}
+:root {
+  --yellow-background: #fffbeb;
+  --yellow-text-color: #92400e;
+  --yellow-icon-color: #fbbf24;
+
+  --red-icon-color: #f87171;
+  --red-text-color: #b45309;
+  --red-background: #fef2f2;
+
+  --blue-text-color: #1e40af;
+  --blue-icon-color: #60a5fa;
+  --blue-background: #eff6ff;
+
+  --green-icon-color: #34d399;
+  --green-text-color: #79ae9d;
+  --green-background: #ecfdf5;
+
+  --indigo-text-color: #3730a3;
+  --indigo-background: #e0e7ff;
+
+  --purple-background: #ede9fe;
+  --purple-text-color: #5b21b6;
+}
+
+.yellow-text {
+  color: var(--yellow-text-color);
+}
+.yellow-icon {
+  color: var(--yellow-icon-color);
+}
+.yellow-background {
+  background-color: var(--yellow-background);
+}
+
+.red-text {
+  color: var(--red-text-color);
+}
+.red-icon {
+  color: var(--red-icon-color);
+}
+.red-background {
+  background-color: var(--red-background);
+}
+
+.blue-text {
+  color: var(--blue-text-color);
+}
+.blue-icon {
+  color: var(--blue-icon-color);
+}
+.blue-background {
+  background-color: var(--blue-background);
+}
+
+.green-text {
+  color: var(--green-text-color);
+}
+.green-icon {
+  color: var(--green-icon-color);
+}
+.green-background {
+  background-color: var(--green-background);
+}
+
+.indigo-text {
+  color: var(--indigo-text-color);
+}
+.indigo-background {
+  background-color: var(--indigo-background);
+}
+.purple-text {
+  color: var(--purple-text-color);
+}
+.purple-background {
+  background-color: var(--purple-background);
+}
+.indigo-text .badge-square,
+.badge-pill {
+  width: 67px;
+  height: 24px;
+  border-radius: 3px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.badge-pill {
+  border-radius: 10px;
+}
+
+.banner {
+  /* width: 100%; */
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* space between heading and description */
+  min-width: 320px;
+  padding: 16px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+  max-width: 95%;
+  opacity: 0.9;
+}
+
+/* Flex container for heading and icon side by side */
+.banner-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Icon size and alignment */
+.icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* Text styling */
+.banner h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.banner p {
+  font-size: 1rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Use your existing color classes for each banner type */
+
+.banner-neutral {
+  background-color: var(--blue-background);
+  color: var(--blue-text-color);
+}
+
+.banner-neutral .icon {
+  color: var(--blue-icon-color);
+}
+
+.banner-success {
+  background-color: var(--green-background);
+  color: var(--green-text-color);
+}
+
+.banner-success .icon {
+  color: var(--green-icon-color);
+}
+
+.banner-error {
+  background-color: var(--red-background);
+  color: var(--red-text-color);
+}
+
+.banner-error .icon {
+  max-width: 30px;
+  color: var(--red-icon-color);
+}
+
+.banner-warning {
+  background-color: var(--yellow-background);
+  color: var(--yellow-text-color);
+}
+
+.banner-warning .icon {
+  color: var(--yellow-icon-color);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 40px;
+  align-items: center;
+  position: relative;
+  background-color: white;
+  height: 320px;
+  border-radius: 10px;
+  text-align: center;
+  padding: 0px 20px;
+  width: 384px;
+}
+
+.card h1 {
+  color: #111827;
+  font-weight: 500;
+  font-size: 2rem;
+}
+
+.card p {
+  color: #6b7280;
+  font-size: 1.3rem;
+}
+
+.card .icon-container {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.1s linear;
+  background-color: dodgerblue;
+  top: -15px;
+  border-radius: 10px;
+}
+
+.card .icon-container .icon {
+  width: 80%;
+  height: 80%;
+  color: white;
+}
+
+.icon-container.hovered-icon {
+  top: -30px;
+}
+
+button {
+  background-color: #e5e7eb;
+  color: #4b5563;
+  border: 1px solid #6b7280;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 9px 17px;
+  border-radius: 6px;
+  line-height: 24px;
+  display: flex;
+  align-items: center;
+}

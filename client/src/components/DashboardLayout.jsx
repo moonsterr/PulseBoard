@@ -1,13 +1,4 @@
-import { useState } from 'react';
-// import //   FaSearch,
-//   FaGear,
-//   FaPeopleGroup,
-//   FaLock,
-//   FaArrowDown,
-//   FaArrowRight,
-//   FaFileCirclePlus,
-//   FaPlus,
-// 'react-icons/fa';
+import { useState, useEffect } from 'react';
 import {
   FaArrowDown,
   FaArrowUp,
@@ -17,16 +8,54 @@ import {
   FaLock,
   FaPlus,
 } from 'react-icons/fa';
-import { NavLink } from 'react-router';
+import { NavLink } from 'react-router-dom';
 import demo_profile from '../assets/demo-profile.jpeg';
 import { MdDashboard } from 'react-icons/md';
 import { Outlet } from 'react-router';
-import { useEffect } from 'react';
+import Banner from './Banner';
+import CreateCollection from './CreateCollection';
+import Spinner from './Spinner';
+import DropdownMenu from './DropdownMenu';
+import { handleDeleteCollection } from '../utils/deletePost';
+
 export default function DashboardLayout() {
   const [toggle, setToggle] = useState(false);
+  const [toggleCollection, setCollectionToggle] = useState(false);
   const [data, setData] = useState([]);
   const [userData, setUserData] = useState({ username: 'loading...' });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState({ error: false, data: null });
+  const [collectionData, setCollectionData] = useState([]);
+  const [collectionLoading, setCollectionLoading] = useState(true);
+  console.log('this is the collection Data,', collectionData);
+
+  async function handleSubmit(formdata) {
+    const username = formdata.get('username');
+    const oldUsername = userData.username;
+    if (username.length < 4) return;
+    setUserData({ username: 'Updating...' });
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/update`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError({ error: true, data: data.data });
+      }
+      setUserData({ username });
+    } catch (error) {
+      console.log(error);
+      setError({
+        error: true,
+        data: 'Something went wrong on our end or your wifi connection is weak',
+      });
+      setUserData({ username: oldUsername });
+    }
+  }
+
   useEffect(() => {
     async function getCanvases() {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/canvases`, {
@@ -39,6 +68,7 @@ export default function DashboardLayout() {
     }
     getCanvases();
   }, []);
+
   useEffect(() => {
     async function getUser() {
       try {
@@ -54,8 +84,46 @@ export default function DashboardLayout() {
     }
     getUser();
   }, []);
+
+  // New useEffect to fetch collections
+  useEffect(() => {
+    async function getCollections() {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/getcollections`,
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
+        const data = await res.json();
+        setCollectionData(data);
+      } catch (error) {
+        console.log('Error fetching collections:', error);
+      } finally {
+        setCollectionLoading(false);
+      }
+    }
+    getCollections();
+  }, []);
+
+  async function handleDelete(id) {
+    await handleDeleteCollection(id);
+  }
+
   return (
     <div className="dashboard">
+      {error.error && (
+        <div className="banner-card-component">
+          <Banner
+            type="error"
+            heading="Update Failed"
+            description={`${
+              error.data === 'username' ? 'username already exists' : error.data
+            }`}
+          />
+        </div>
+      )}
       <div className="dashboard-sidebar">
         <div className="sidebar-profile">
           <div className="profile-shown">
@@ -69,26 +137,29 @@ export default function DashboardLayout() {
               {toggle ? (
                 <FaArrowUp
                   className="sidebar-icon"
-                  onClick={() => setToggle((prevToggle) => !prevToggle)}
+                  onClick={() => setToggle((prev) => !prev)}
                 />
               ) : (
                 <FaArrowDown
                   className="sidebar-icon"
-                  onClick={() => setToggle((prevToggle) => !prevToggle)}
+                  onClick={() => setToggle((prev) => !prev)}
                 />
               )}
             </div>
           </div>
           {toggle && (
             <div className="profile-hidden">
-              <div className="profile-hidden-field">
-                <label htmlFor="username">Username</label>
-                <input type="text" id="username" />
-              </div>
-              <button>Update </button>
+              <form action={handleSubmit}>
+                <div className="profile-hidden-field">
+                  <label htmlFor="username">Username</label>
+                  <input type="text" id="username" name="username" />
+                </div>
+                <button>Update</button>
+              </form>
             </div>
           )}
         </div>
+
         <div className="sidebar-tabs">
           <div className="sidebar-tab search-tab">
             <FaSearch className="sidebar-icon" />
@@ -119,8 +190,14 @@ export default function DashboardLayout() {
         <div className="collections">
           <div className="collections-header">
             <h3>Collections</h3>
-            <div className="collections-icon">
+            <div
+              className="collections-icon"
+              onClick={() => setCollectionToggle(true)}
+            >
               <FaPlus className="sidebar-icon" />
+              {toggleCollection && (
+                <CreateCollection setToggle={setCollectionToggle} />
+              )}
             </div>
           </div>
           <div className="sidebar-tabs">
@@ -133,20 +210,31 @@ export default function DashboardLayout() {
               <FaLock className="sidebar-icon" />
               Private
             </NavLink>
+            {collectionLoading && <Spinner />}
 
-            <NavLink
-              to="/collections/rocket"
-              className={({ isActive }) =>
-                `sidebar-tab ${isActive ? 'sidebar-active' : ''}`
-              }
-            >
-              <span>🚀</span>
-              <p>Rocket Diagram</p>
-            </NavLink>
+            {collectionData.length > 0 &&
+              collectionData.map((collection) => (
+                <NavLink
+                  key={collection.id}
+                  to={`${collection.id}`}
+                  className={({ isActive }) =>
+                    `sidebar-tab sidebar-collection ${
+                      isActive ? 'sidebar-active' : ''
+                    }`
+                  }
+                >
+                  <p>{collection.name}</p>
+                  <DropdownMenu
+                    id={collection.id}
+                    handleDelete={handleDelete}
+                  />
+                </NavLink>
+              ))}
           </div>
         </div>
       </div>
-      <Outlet context={{ data, loading }} />
+
+      <Outlet context={{ data, loading, collectionData }} />
     </div>
   );
 }

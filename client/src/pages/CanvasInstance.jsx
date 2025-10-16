@@ -6,7 +6,6 @@ import Loading from '../components/Loading';
 import { useSearchParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
-const socket = io(import.meta.env.VITE_API_URL_WS, { withCredentials: true });
 const DrawContext = createContext();
 
 export default function CanvasInstance() {
@@ -116,8 +115,22 @@ export default function CanvasInstance() {
     ctxRef.current = canvas.getContext('2d');
   }, [loading]);
 
+  const [socket, setSocket] = useState(null);
+
+  useEffect(() => {
+    const newSocket = io(import.meta.env.VITE_API_URL_WS, {
+      withCredentials: true,
+    });
+    setSocket(newSocket);
+
+    // Cleanup on unmount
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
   // ---------- Socket listeners ----------
   useEffect(() => {
+    if (!socket) return;
     socket.on('element:new', ({ id, element }) => {
       setElements((prev) => ({ ...prev, [id]: element }));
       setOrder((prev) => [...prev, id]);
@@ -131,7 +144,7 @@ export default function CanvasInstance() {
       socket.off('element:new');
       socket.off('element:update');
     };
-  }, []);
+  }, [socket]);
 
   // ---------- Utility functions ----------
   function findCurrentTool(e) {

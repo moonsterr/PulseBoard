@@ -7,6 +7,7 @@ import AuthLayout from './components/AuthLayout';
 import DashboardLayout from './components/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import Team from './pages/Team';
+import Collection from './pages/Collection';
 export default function App() {
   return (
     <BrowserRouter>
@@ -16,6 +17,8 @@ export default function App() {
           <Route path="/canvas" element={<CanvasInstance />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />}></Route>
+            <Route path=":id" element={<Collection />} />
+
             <Route path="team" element={<Team />} />
           </Route>
         </Route>

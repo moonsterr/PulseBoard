@@ -8,9 +8,6 @@ import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import './services/googleService.js';
 import { initSockets } from './sockets/index.js';
-import { connectConsumer } from './consumer/kafka.js';
-import { connectProducer } from './producer/kafka.js';
-import startConsumers from './consumer/index.js';
 
 const app = express();
 dotenv.config();
@@ -37,9 +34,6 @@ const port = process.env.PORT || 3000;
 server.listen(port, () => {
   console.log('Server listing on http://localhost:3000');
 });
-
-// import createElementsTopic from './test.js';
-// createElementsTopic();
 
 (async function run() {
   const { Kafka } = await import('kafkajs');

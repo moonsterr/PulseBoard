@@ -7,6 +7,7 @@ import {
   addAuthorizedUserService,
   getAuthorizedByService,
   getAuthorizedUsersService,
+  updateUsernameService,
 } from '../services/userService.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -121,5 +122,20 @@ export const getAuthorizedUsers = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).send({ success: false, error: error.message });
+  }
+};
+export const updateUsername = async (req, res) => {
+  try {
+    const username = req.body.username;
+    const id = req.user.id;
+    const updatedUsername = await updateUsernameService(id, username);
+    if (updateUsername === 'username') {
+      return res.status(400).send({ success: false, data: username });
+    }
+    console.log('yadasha');
+    return res.status(200).send({ success: true, data: updateUsername });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).send({ success: false, data: error.message });
   }
 };
