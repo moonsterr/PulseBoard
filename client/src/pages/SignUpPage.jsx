@@ -2,20 +2,35 @@ import { useState } from 'react';
 import drawImg from '../assets/draw.svg';
 import g from '../assets/g.svg';
 import { FaEnvelope, FaLock, FaUser } from 'react-icons/fa';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import Banner from '../components/Banner.jsx';
 import registrationHelper from '../utils/registrationHelper';
-import { useNavigate } from 'react-router';
 
 export default function SignUpPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  function errorHelper(error) {
-    if (error === 'email') {
+
+  function errorHelper(errorCode) {
+    if (errorCode === 'email') {
       return {
         heading: 'The email you entered is already in use',
         description:
           'Somebody has already used this email before, you can request an email change or use a different email',
+      };
+    } else if (errorCode === 'shortEmail') {
+      return {
+        heading: 'Email too short',
+        description: 'Email must be at least 3 characters long.',
+      };
+    } else if (errorCode === 'shortUsername') {
+      return {
+        heading: 'Username too short',
+        description: 'Username must be at least 3 characters long.',
+      };
+    } else if (errorCode === 'shortPassword') {
+      return {
+        heading: 'Password too short',
+        description: 'Password must be at least 8 characters long.',
       };
     } else {
       return {
@@ -25,14 +40,41 @@ export default function SignUpPage() {
       };
     }
   }
-  async function handleSubmit(formData) {
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const email = formData.get('email').trim();
+    const username = formData.get('username').trim();
+    const password = formData.get('password').trim();
+
+    // Client-side validation
+    if (email.length < 3) {
+      setError('shortEmail');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    if (username.length < 3) {
+      setError('shortUsername');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    if (password.length < 8) {
+      setError('shortPassword');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
     const data = await registrationHelper(formData, 'register');
+
     if (!data.success) {
       setError(data.data);
+      setTimeout(() => setError(''), 3000);
     } else {
       navigate('/');
     }
   }
+
   return (
     <main>
       <div className="registration-page">
@@ -53,9 +95,9 @@ export default function SignUpPage() {
           )}
           <div className="account">
             <div className="account-details">
-              <h1>Create Account </h1>
+              <h1>Create Account</h1>
               <p>Enter your credentials and get ready to explore!</p>
-              <form action={handleSubmit} className="registration-form">
+              <form onSubmit={handleSubmit} className="registration-form">
                 <div className="form-field">
                   <div className="form-field-icon">
                     <FaEnvelope className="icon" />
@@ -93,9 +135,17 @@ export default function SignUpPage() {
                   Create account
                 </button>
               </form>
-              <button type="button" className="registration-button google">
+              <button
+                type="button"
+                className="registration-button google"
+                onClick={() => {
+                  window.location.href = `${
+                    import.meta.env.VITE_API_URL
+                  }/auth/google`;
+                }}
+              >
                 <img style={{ width: '25px', height: '25px' }} src={g} alt="" />
-                Register with google
+                Register with Google
               </button>
 
               <h4>

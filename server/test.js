@@ -1,14 +1,22 @@
 import query from './services/dbQuery.js';
-export const clearAuthorizedTable = async () => {
-  const sql = 'TRUNCATE TABLE authorized RESTART IDENTITY CASCADE';
+export async function listTables() {
   try {
-    await query(sql);
-    console.log('Authorized table cleared successfully.');
-    return true;
-  } catch (err) {
-    console.error('Error clearing authorized table:', err);
-    return false;
-  }
-};
+    const result = await query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_type = 'BASE TABLE'
+      ORDER BY table_name;
+    `);
 
-clearAuthorizedTable();
+    const tables = result.rows.map((row) => row.table_name);
+    console.log('Tables in database:', tables);
+    return tables;
+  } catch (err) {
+    console.error('Error listing tables:', err);
+    return [];
+  }
+}
+
+// Example usage:
+listTables();

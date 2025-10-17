@@ -17,6 +17,7 @@ import CreateCollection from './CreateCollection';
 import Spinner from './Spinner';
 import DropdownMenu from './DropdownMenu';
 import { handleDeleteCollection } from '../utils/deletePost';
+import EditName from './LayoutEditName';
 
 export default function DashboardLayout() {
   const [toggle, setToggle] = useState(false);
@@ -27,6 +28,7 @@ export default function DashboardLayout() {
   const [error, setError] = useState({ error: false, data: null });
   const [collectionData, setCollectionData] = useState([]);
   const [collectionLoading, setCollectionLoading] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
 
   async function handleSubmit(formdata) {
     const username = formdata.get('username');
@@ -216,21 +218,32 @@ export default function DashboardLayout() {
 
             {collectionData.length > 0 &&
               collectionData.map((collection) => (
-                <NavLink
-                  key={collection.id}
-                  to={`${collection.id}`}
-                  className={({ isActive }) =>
-                    `sidebar-tab sidebar-collection ${
-                      isActive ? 'sidebar-active' : ''
-                    }`
-                  }
-                >
-                  <p>{collection.name}</p>
-                  <DropdownMenu
-                    id={collection.id}
-                    handleDelete={handleDelete}
-                  />
-                </NavLink>
+                <>
+                  {editOpen && (
+                    <EditName
+                      setToggle={setEditOpen}
+                      id={collection.id}
+                      name={collection.name}
+                      setData={setCollectionData}
+                    />
+                  )}
+                  <NavLink
+                    key={collection.id}
+                    to={`${collection.id}`}
+                    className={({ isActive }) =>
+                      `sidebar-tab sidebar-collection ${
+                        isActive ? 'sidebar-active' : ''
+                      }`
+                    }
+                  >
+                    <p>{collection.name}</p>
+                    <DropdownMenu
+                      id={collection.id}
+                      setEditOpen={setEditOpen}
+                      handleDelete={handleDelete}
+                    />
+                  </NavLink>
+                </>
               ))}
           </div>
         </div>

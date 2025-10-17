@@ -8,7 +8,7 @@ export const sendToKafka = async (eventType, element, canvasId) => {
       canvasId,
     };
 
-    await producer.send({
+    producer.send({
       topic: 'elements-topic',
       messages: [
         {
@@ -18,7 +18,7 @@ export const sendToKafka = async (eventType, element, canvasId) => {
       ],
     });
 
-    // console.log(`Kafka message sent: ${eventType}`, messagePayload);
+    console.log(`Kafka message sent: ${eventType}`, messagePayload);
   } catch (err) {
     console.error('Error sending message to Kafka:', err);
   }
