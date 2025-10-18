@@ -723,10 +723,9 @@ a {
   margin-left: 50%;
   transform: translateX(-50%);
   cursor: pointer;
-  z-index: 1000000000000;
+  z-index: 100;
   top: 0px;
   left: 0px;
-  border: 1px solid black;
 }
 
 .drawing-options .option {
@@ -951,7 +950,7 @@ canvas {
   border: none;
   width: 100vw;
   height: 100vh;
-  z-index: 100000000000;
+  z-index: 10;
   position: absolute;
   top: 0px;
   left: 0px;

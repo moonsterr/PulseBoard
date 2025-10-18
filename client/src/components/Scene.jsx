@@ -66,6 +66,7 @@ function Scene({ canvas }) {
               title="Delete"
               handleDelete={handleDeleteCanvas}
               setEditOpen={setEditOpen}
+              id={canvas.id}
             />
           </div>
         </div>

@@ -1,15 +1,21 @@
-import DrawOptions from '../components/DrawOptions';
-import DrawCustomizations from '../components/DrawCustomizations';
-import { createContext, useState, useRef, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from 'react';
 import { nanoid } from 'nanoid';
-import Loading from '../components/Loading';
 import { useSearchParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
+
+import DrawOptions from '../components/DrawOptions';
+import DrawCustomizations from '../components/DrawCustomizations';
+import Loading from '../components/Loading';
 
 const DrawContext = createContext();
 
 export default function CanvasInstance() {
-  // Drawing tools and styles
   const [draw, setDraw] = useState({
     current: 'draw',
     square: {
@@ -56,7 +62,9 @@ export default function CanvasInstance() {
   });
   const canvasId = searchParams.get('id');
 
-  // ---------- Verify canvas access ----------
+  const [selectedId, setSelectedId] = useState(null);
+  const resizingHandleRef = useRef(null);
+
   useEffect(() => {
     const verify = async () => {
       try {
@@ -71,7 +79,6 @@ export default function CanvasInstance() {
         );
         if (!res.ok) throw new Error('Verification failed');
         setLoading({ loading: true, status: 'fetching' });
-        // Fetch initial canvas data here if needed
         const res2 = await fetch(`${import.meta.env.VITE_API_URL}/${canvasId}`);
         const data = await res2.json();
 
@@ -101,9 +108,8 @@ export default function CanvasInstance() {
       }
     };
     verify();
-  }, []);
+  }, [canvasId]);
 
-  // ---------- Init canvas ----------
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -119,31 +125,26 @@ export default function CanvasInstance() {
       withCredentials: true,
     });
     setSocket(newSocket);
-
-    // Cleanup on unmount
     return () => {
       newSocket.disconnect();
     };
   }, []);
-  // ---------- Socket listeners ----------
+
   useEffect(() => {
     if (!socket) return;
     socket.on('element:new', ({ id, element }) => {
       setElements((prev) => ({ ...prev, [id]: element }));
       setOrder((prev) => [...prev, id]);
     });
-
     socket.on('element:update', ({ id, element }) => {
       setElements((prev) => ({ ...prev, [id]: element }));
     });
-
     return () => {
       socket.off('element:new');
       socket.off('element:update');
     };
   }, [socket]);
 
-  // ---------- Utility functions ----------
   function findCurrentTool(e) {
     return {
       current: draw.current,
@@ -201,7 +202,10 @@ export default function CanvasInstance() {
     if (type === 'square') {
       ctx.beginPath();
       ctx.rect(x, y, width, height);
-      if (shouldFill) (ctx.fillStyle = style.fill), ctx.fill();
+      if (shouldFill) {
+        ctx.fillStyle = style.fill;
+        ctx.fill();
+      }
       ctx.stroke();
     } else if (type === 'diamond') {
       const cx = x + width / 2;
@@ -211,14 +215,20 @@ export default function CanvasInstance() {
       ctx.lineTo(x + width, cy);
       ctx.lineTo(cx, y + height);
       ctx.lineTo(x, cy);
-      if (shouldFill) (ctx.fillStyle = style.fill), ctx.fill();
+      if (shouldFill) {
+        ctx.fillStyle = style.fill;
+        ctx.fill();
+      }
       ctx.closePath();
       ctx.stroke();
     } else if (type === 'circle') {
       const radius = Math.min(width, height) / 2;
       ctx.beginPath();
       ctx.arc(x + width / 2, y + height / 2, radius, 0, Math.PI * 2);
-      if (shouldFill) (ctx.fillStyle = style.fill), ctx.fill();
+      if (shouldFill) {
+        ctx.fillStyle = style.fill;
+        ctx.fill();
+      }
       ctx.stroke();
     } else if (type === 'line' || type === 'arrow') {
       ctx.beginPath();
@@ -265,14 +275,94 @@ export default function CanvasInstance() {
     const canvas = canvasRef.current;
     if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (const id of order) drawElement(ctx, elements[id]);
-  }, [elements, order, pan]);
 
-  useEffect(() => redraw(), [elements, order, pan, redraw]);
+    for (const id of order) {
+      drawElement(ctx, elements[id]);
+    }
 
-  // ---------- Drawing handlers ----------
-  function onInitiateDraw(e) {
+    if (selectedId && elements[selectedId]) {
+      const el = elements[selectedId];
+      const { startingPosition, endingPosition, type } = el;
+      if (
+        startingPosition &&
+        endingPosition &&
+        ['square', 'diamond', 'circle', 'line', 'arrow'].includes(type)
+      ) {
+        const offsetX = pan.x;
+        const offsetY = pan.y;
+        const startX = startingPosition.x + offsetX;
+        const startY = startingPosition.y + offsetY;
+        const endX = endingPosition.x + offsetX;
+        const endY = endingPosition.y + offsetY;
+        const x = Math.min(startX, endX);
+        const y = Math.min(startY, endY);
+        const width = Math.abs(endX - startX);
+        const height = Math.abs(endY - startY);
+
+        ctx.save();
+        ctx.strokeStyle = '#00f';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 3]);
+        ctx.strokeRect(x, y, width, height);
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#00f';
+
+        const handleSize = 8;
+        const handles = [
+          { x: x, y: y, cursor: 'nw-resize', pos: 'nw' },
+          { x: x + width, y: y, cursor: 'ne-resize', pos: 'ne' },
+          { x: x, y: y + height, cursor: 'sw-resize', pos: 'sw' },
+          { x: x + width, y: y + height, cursor: 'se-resize', pos: 'se' },
+        ];
+        handles.forEach((h) => {
+          ctx.fillRect(
+            h.x - handleSize / 2,
+            h.y - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+        });
+        ctx.restore();
+      }
+    }
+  }, [elements, order, selectedId, pan]);
+
+  useEffect(() => {
+    redraw();
+  }, [elements, order, selectedId, pan, redraw]);
+
+  function getElementAtPosition(xCanvas, yCanvas) {
+    for (let i = order.length - 1; i >= 0; i--) {
+      const id = order[i];
+      const el = elements[id];
+      if (!el) continue;
+      const { startingPosition, endingPosition } = el;
+      if (startingPosition && endingPosition) {
+        const sx = startingPosition.x + pan.x;
+        const sy = startingPosition.y + pan.y;
+        const ex = endingPosition.x + pan.x;
+        const ey = endingPosition.y + pan.y;
+        const x0 = Math.min(sx, ex);
+        const y0 = Math.min(sy, ey);
+        const w = Math.abs(ex - sx);
+        const h = Math.abs(ey - sy);
+        if (
+          xCanvas >= x0 &&
+          xCanvas <= x0 + w &&
+          yCanvas >= y0 &&
+          yCanvas <= y0 + h
+        ) {
+          return id;
+        }
+      }
+    }
+    return null;
+  }
+
+  function onMouseDown(e) {
     const tool = findCurrentTool(e);
+    const x = tool.x;
+    const y = tool.y;
 
     if (tool.current === 'pan') {
       isPanningRef.current = true;
@@ -280,44 +370,89 @@ export default function CanvasInstance() {
       return;
     }
 
-    const ctx = ctxRef.current;
-    setCtxContext(tool);
+    if (selectedId && elements[selectedId]) {
+      const el = elements[selectedId];
+      const { startingPosition, endingPosition } = el;
+      if (startingPosition && endingPosition) {
+        const offsetX = pan.x;
+        const offsetY = pan.y;
+        const startX = startingPosition.x + offsetX;
+        const startY = startingPosition.y + offsetY;
+        const endX = endingPosition.x + offsetX;
+        const endY = endingPosition.y + offsetY;
+        const x0 = Math.min(startX, endX);
+        const y0 = Math.min(startY, endY);
+        const w = Math.abs(endX - startX);
+        const h = Math.abs(endY - startY);
+        const handleSize = 8;
 
-    const id = nanoid();
-    let el = null;
-
-    if (['draw', 'eraser'].includes(tool.current)) {
-      el = {
-        _id: id,
-        type: tool.current,
-        points: [{ x: tool.x - pan.x, y: tool.y - pan.y }],
-        style: { ...draw[tool.current] },
-      };
-    } else if (
-      ['square', 'diamond', 'circle', 'line', 'arrow', 'text'].includes(
-        tool.current
-      )
-    ) {
-      el = {
-        _id: id,
-        type: tool.current,
-        startingPosition: { x: tool.x - pan.x, y: tool.y - pan.y },
-        endingPosition: { x: tool.x - pan.x, y: tool.y - pan.y },
-        style: { ...draw[tool.current] },
-      };
+        const handleZones = [
+          { x: x0, y: y0, pos: 'nw' },
+          { x: x0 + w, y: y0, pos: 'ne' },
+          { x: x0, y: y0 + h, pos: 'sw' },
+          { x: x0 + w, y: y0 + h, pos: 'se' },
+        ];
+        for (const hz of handleZones) {
+          if (
+            x >= hz.x - handleSize &&
+            x <= hz.x + handleSize &&
+            y >= hz.y - handleSize &&
+            y <= hz.y + handleSize
+          ) {
+            resizingHandleRef.current = hz.pos;
+            setIsDrawing(false);
+            return;
+          }
+        }
+      }
     }
 
-    if (el) {
-      setElements((prev) => ({ ...prev, [id]: el }));
-      setOrder((prev) => [...prev, id]);
-      socket.emit('element:new', { id, element: el, canvasId });
-    }
+    const clickedId = getElementAtPosition(x, y);
+    if (clickedId) {
+      setSelectedId(clickedId);
+      return;
+    } else {
+      setSelectedId(null);
 
-    if (ctx) ctx.beginPath(), ctx.moveTo(tool.x, tool.y);
-    setIsDrawing(true);
+      const ctx = ctxRef.current;
+      setCtxContext(tool);
+
+      const id = nanoid();
+      let el = null;
+
+      if (['draw', 'eraser'].includes(tool.current)) {
+        el = {
+          _id: id,
+          type: tool.current,
+          points: [{ x: tool.x - pan.x, y: tool.y - pan.y }],
+          style: { ...draw[tool.current] },
+        };
+      } else if (
+        ['square', 'diamond', 'circle', 'line', 'arrow', 'text'].includes(
+          tool.current
+        )
+      ) {
+        el = {
+          _id: id,
+          type: tool.current,
+          startingPosition: { x: tool.x - pan.x, y: tool.y - pan.y },
+          endingPosition: { x: tool.x - pan.x, y: tool.y - pan.y },
+          style: { ...draw[tool.current] },
+        };
+      }
+
+      if (el) {
+        setElements((prev) => ({ ...prev, [id]: el }));
+        setOrder((prev) => [...prev, id]);
+        socket.emit('element:new', { id, element: el, canvasId });
+      }
+
+      if (ctx) ctx.beginPath(), ctx.moveTo(tool.x, tool.y);
+      setIsDrawing(true);
+    }
   }
 
-  function whileDrawing(e) {
+  function onMouseMove(e) {
     const tool = findCurrentTool(e);
 
     if (tool.current === 'pan') {
@@ -329,11 +464,60 @@ export default function CanvasInstance() {
       return;
     }
 
+    const x = tool.x,
+      y = tool.y;
+    if (resizingHandleRef.current && selectedId) {
+      setElements((prev) => {
+        const el = prev[selectedId];
+        if (!el || !el.startingPosition || !el.endingPosition) return prev;
+
+        const sx = el.startingPosition.x;
+        const sy = el.startingPosition.y;
+        const ex = el.endingPosition.x;
+        const ey = el.endingPosition.y;
+
+        const curOffsetX = pan.x;
+        const curOffsetY = pan.y;
+
+        const mouseX = x - curOffsetX;
+        const mouseY = y - curOffsetY;
+
+        let newStart = { x: sx, y: sy };
+        let newEnd = { x: ex, y: ey };
+
+        const dir = resizingHandleRef.current;
+        if (dir === 'nw') {
+          newStart = { x: mouseX, y: mouseY };
+          newEnd = { x: ex, y: ey };
+        } else if (dir === 'ne') {
+          newStart = { x: sx, y: mouseY };
+          newEnd = { x: mouseX, y: ey };
+        } else if (dir === 'sw') {
+          newStart = { x: mouseX, y: sy };
+          newEnd = { x: ex, y: mouseY };
+        } else if (dir === 'se') {
+          newStart = { x: sx, y: sy };
+          newEnd = { x: mouseX, y: mouseY };
+        }
+
+        const updated = {
+          ...el,
+          startingPosition: newStart,
+          endingPosition: newEnd,
+        };
+        socket.emit('element:update', {
+          id: selectedId,
+          element: updated,
+          canvasId,
+        });
+        return { ...prev, [selectedId]: updated };
+      });
+      return;
+    }
+
     if (!isDrawing) return;
     const lastId = order[order.length - 1];
     if (!lastId) return;
-
-    const ctx = ctxRef.current;
 
     if (['draw', 'eraser'].includes(tool.current)) {
       setElements((prev) => {
@@ -350,7 +534,11 @@ export default function CanvasInstance() {
         });
         return { ...prev, [lastId]: updated };
       });
-      if (ctx) ctx.lineTo(tool.x, tool.y), ctx.stroke();
+      const ctx = ctxRef.current;
+      if (ctx) {
+        ctx.lineTo(tool.x, tool.y);
+        ctx.stroke();
+      }
     } else {
       setElements((prev) => {
         const last = prev[lastId];
@@ -369,7 +557,10 @@ export default function CanvasInstance() {
     }
   }
 
-  function onExitDraw() {
+  function onMouseUp() {
+    if (resizingHandleRef.current) {
+      resizingHandleRef.current = null;
+    }
     setIsDrawing(false);
     isPanningRef.current = false;
   }
@@ -381,10 +572,12 @@ export default function CanvasInstance() {
     setElements,
     order,
     setOrder,
-    startDrawing: onInitiateDraw,
-    stopDrawing: onExitDraw,
+    startDrawing: onMouseDown,
+    stopDrawing: onMouseUp,
     pan,
     setPan,
+    selectedId,
+    setSelectedId,
   };
 
   if (loading.loading) {
@@ -404,9 +597,14 @@ export default function CanvasInstance() {
         <DrawOptions />
         <canvas
           ref={canvasRef}
-          onMouseDown={onInitiateDraw}
-          onMouseMove={whileDrawing}
-          onMouseUp={onExitDraw}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          style={{
+            cursor: resizingHandleRef.current
+              ? resizingHandleRef.current + '-resize'
+              : 'default',
+          }}
         />
         <DrawCustomizations />
       </main>
