@@ -46,6 +46,13 @@ export default function CanvasInstance() {
 
   const [elements, setElements] = useState({});
   const [order, setOrder] = useState([]);
+  const [localUserData, setLocalUserData] = useState({
+    id: null,
+    name: 'unknown',
+    x: 0,
+    y: 0,
+  });
+  const [userData, setUserData] = useState({});
 
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
@@ -64,7 +71,6 @@ export default function CanvasInstance() {
 
   const [selectedId, setSelectedId] = useState(null);
   const resizingHandleRef = useRef(null);
-
   useEffect(() => {
     const verify = async () => {
       try {
@@ -78,6 +84,15 @@ export default function CanvasInstance() {
           }
         );
         if (!res.ok) throw new Error('Verification failed');
+        const userData = await res.json();
+        setLocalUserData((prev) => ({
+          ...prev,
+          id: userData.data.id,
+          name: userData.data.name,
+        }));
+        // if(userData.success) {
+        //   set
+        // }
         setLoading({ loading: true, status: 'fetching' });
         const res2 = await fetch(`${import.meta.env.VITE_API_URL}/${canvasId}`);
         const data = await res2.json();
@@ -86,7 +101,6 @@ export default function CanvasInstance() {
         if (data.success) {
           const formattedElements = {};
           const formattedOrder = [];
-
           if (Array.isArray(data.data)) {
             data.data.forEach((el) => {
               formattedElements[el._id] = el;
@@ -139,12 +153,36 @@ export default function CanvasInstance() {
     socket.on('element:update', ({ id, element }) => {
       setElements((prev) => ({ ...prev, [id]: element }));
     });
+    socket.on('mouse:move', (data) => {
+      setUserData((prev) => {
+        if (!prev[data.id]) {
+          const colors = ['red', 'green', 'dodgerblue', 'yellow'];
+          data.color = colors[Object.keys(prev).length % colors.length];
+        } else {
+          data.color = prev[data.id].color;
+        }
+        return { ...prev, [data.id]: data };
+      });
+    });
     return () => {
       socket.off('element:new');
       socket.off('element:update');
+      socket.off('mouse:move');
     };
   }, [socket]);
 
+  useEffect(() => {
+    function handleGlobalMouseMove(e) {
+      if (!localUserData.id) return; // wait for id
+      const newData = { ...localUserData, x: e.clientX, y: e.clientY };
+      setLocalUserData(newData);
+      if (socket) socket.emit('mouse:move', newData);
+    }
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
+  }, [socket, localUserData]);
   function findCurrentTool(e) {
     return {
       current: draw.current,
@@ -452,6 +490,10 @@ export default function CanvasInstance() {
     }
   }
 
+  function onMouseOver(e) {
+    console.log('move');
+  }
+
   function onMouseMove(e) {
     const tool = findCurrentTool(e);
 
@@ -599,6 +641,7 @@ export default function CanvasInstance() {
           ref={canvasRef}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
+          onMouseOver={onMouseOver}
           onMouseUp={onMouseUp}
           style={{
             cursor: resizingHandleRef.current
@@ -607,6 +650,22 @@ export default function CanvasInstance() {
           }}
         />
         <DrawCustomizations />
+
+        {userData && Object.keys(userData).length > 0
+          ? Object.entries(userData).map(([id, user]) => (
+              <div
+                key={id}
+                className="userbox"
+                style={{
+                  left: user.x - 40,
+                  top: user.y,
+                  backgroundColor: user.color,
+                }}
+              >
+                {user.name}
+              </div>
+            ))
+          : null}
       </main>
     </DrawContext.Provider>
   );

@@ -44,9 +44,17 @@ export const getCanvasService = async (userId) => {
 };
 export const authorizeUserService = async (userId, ownerId) => {
   try {
+    console.log('hello');
+    const userRes = await query(
+      `SELECT id, username AS name FROM users WHERE id = $1 LIMIT 1;`,
+      [userId]
+    );
+
+    const user = userRes.rows[0] || { id: userId, name: 'Unknown' };
+    console.log('hello 2');
     // Case 1: User is the direct owner
     if (userId === ownerId) {
-      return true;
+      return { authorized: true, id: user.id, name: user.name };
     }
 
     // Case 2: Check if the user is authorized by the owner
@@ -58,7 +66,9 @@ export const authorizeUserService = async (userId, ownerId) => {
        LIMIT 1;`,
       [userId, ownerId]
     );
-    return result.rowCount > 0; // true if authorized exists
+    console.log(result.rowCount);
+    console.log(user);
+    return { authorized: result.rowCount > 0, id: user.id, name: user.name }; // true if authorized exists
   } catch (err) {
     console.error('Error in authorizeUserService:', err);
     return false; // safer fallback

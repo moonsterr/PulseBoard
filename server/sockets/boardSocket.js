@@ -17,6 +17,10 @@ export default (io, socket) => {
     i++;
     console.log('yes sent', i);
   });
+  socket.on('mouse:move', async (userData) => {
+    console.log('this the user data', userData);
+    socket.broadcast.emit('mouse:move', userData);
+  });
 
   socket.on('disconnect', () => {
     console.log('Board socket disconnected:', socket.id);

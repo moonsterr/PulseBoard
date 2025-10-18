@@ -53,11 +53,16 @@ export const authorizeUser = async (req, res) => {
     const ownerId = ownerObj.data;
     const authorized = await authorizeUserService(userId, ownerId);
 
-    if (!authorized) {
+    if (!authorized.authorized) {
       return res.status(401).send({ success: false, data: 'not authorized' });
     }
 
-    return res.status(200).send({ success: true, data: 'authorized' });
+    return res
+      .status(200)
+      .send({
+        success: true,
+        data: { id: authorized.id, name: authorized.name },
+      });
   } catch (error) {
     console.log(error);
     return res.status(401).send({ success: false, data: error });

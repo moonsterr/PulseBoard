@@ -17,8 +17,6 @@ export const sendToKafka = async (eventType, element, canvasId) => {
         },
       ],
     });
-
-    console.log(`Kafka message sent: ${eventType}`, messagePayload);
   } catch (err) {
     console.error('Error sending message to Kafka:', err);
   }
