@@ -1,6 +1,6 @@
-# Collaborative Whiteboard
+# Pulse Board
 
-**Collaborative Whiteboard** is a real-time online application that allows multiple users to draw, create shapes, and organize their work on a shared canvas. Users can customize their drawings with colors, brush sizes, and shapes, and save elements into collections for easy organization and sharing.
+**Pulse Board** is a real-time collaborative whiteboard and online application that allows multiple users to draw, create shapes, and organize their work on a shared canvas. Users can customize their drawings with colors, brush sizes, and shapes, and save elements into collections for easy organization and sharing.
 
 ---
 
